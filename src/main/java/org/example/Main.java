@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -24,7 +25,8 @@ public class Main {
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(BASE_API + formattedDate + "_" + priceZone /*+ ".json"*/))
+                .timeout(Duration.ofSeconds(10))
+                .uri(URI.create(BASE_API + formattedDate + "_" + priceZone + ".json"))
                 .build();
         var response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
