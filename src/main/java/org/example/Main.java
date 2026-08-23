@@ -3,19 +3,72 @@ package org.example;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class Main {
     static final String BASE_API = "https://www.elprisetjustnu.se/api/v1/prices/";
 
+    HttpClient httpClient = HttpClient
+            .newBuilder()
+            .version(HttpClient.Version.HTTP_3)
+            .build();
+
     void main() {
         IO.println("Hello World!");
+    }
+
+    void printCommandMenu() {
+        IO.print("""
+                Elpriser – Analysverktyg
+                ========================
+                1. Välj elområde (SE1, SE2, SE3, SE4)
+                2. Min, Max och Medelpris
+                3. Sortera priser (lägst till högst)
+                4. Bästa laddningstid (4h sammanhängande)
+                e. Avsluta
+                """);
+    }
+
+    TimeSlotPrice[] choosePriceZone() {
+        try {
+            String priceZone;
+            do {
+                IO.println("Ange ett giltigt elområde: SE1, SE2, SE3, eller SE4");
+                priceZone = IO.readln("Elområde: ");
+            } while (!isValidPriceZone(priceZone));
+            IO.println("Du har valt elområde: " + priceZone);
+            return fetchPrices(httpClient, priceZone);
+        } catch (HttpTimeoutException _) {
+            IO.println("Servern tog för lång tid att svara, försök igen!");
+        } catch (ConnectException _) {
+            IO.println("Kunde inte ansluta till servern. Kontrollera din nätverksanslutning!");
+        } catch (IOException e) {
+            IO.println("Elpriser kunde inte hämtas, försök igen: " + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            IO.println("Din förfrågan till servern avbröts, försök igen: " + e.getMessage());
+        }
+        return new TimeSlotPrice[0];
+    }
+
+    boolean isValidPriceZone(String zone) {
+        return Objects.equals(zone, "SE1") ||
+                Objects.equals(zone, "SE2") ||
+                Objects.equals(zone, "SE3") ||
+                Objects.equals(zone, "SE4");
+    }
+
+    boolean isExitCommand(String command) {
+        return Objects.equals(command, "e") || Objects.equals(command, "E");
     }
 
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
