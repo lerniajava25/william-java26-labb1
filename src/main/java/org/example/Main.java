@@ -55,6 +55,28 @@ public class Main {
                 Objects.equals(zone, "SE4");
     }
 
+    void calculateMinMaxMean(TimeSlotPrice[] prices) {
+        double minPrice = Double.MAX_VALUE;
+        double maxPrice = 0;
+        double meanPrice = 0;
+        for (TimeSlotPrice price : prices) {
+            if (price.SEK_per_kWh() < minPrice)
+                minPrice = price.SEK_per_kWh();
+            if (price.SEK_per_kWh() > maxPrice)
+                maxPrice = price.SEK_per_kWh();
+            meanPrice += price.SEK_per_kWh();
+        }
+        meanPrice = meanPrice / prices.length;
+
+        minPrice = Math.ceil(minPrice * 100);
+        maxPrice = Math.ceil(maxPrice * 100);
+        meanPrice = Math.ceil(meanPrice * 100);
+
+        IO.println(String.format("Dagens lägsta elpris: %.0f öre/kWh", minPrice));
+        IO.println(String.format("Dagens högsta elpris: %.0f öre/kWh", maxPrice));
+        IO.println(String.format("Dagens medelpris: %.0f öre/kWh", meanPrice));
+    }
+
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
         LocalDateTime date = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM-dd");
