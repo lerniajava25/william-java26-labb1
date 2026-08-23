@@ -55,10 +55,6 @@ public class Main {
                 Objects.equals(zone, "SE4");
     }
 
-    boolean isExitCommand(String command) {
-        return Objects.equals(command, "e") || Objects.equals(command, "E");
-    }
-
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
         LocalDateTime date = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM-dd");
