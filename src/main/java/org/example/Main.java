@@ -25,8 +25,10 @@ public class Main {
     void main() {
         printCommandMenu();
         String command;
-        do {
-            command = IO.readln("Kommando: ");
+        while ((command = IO.readln("Kommando: ")) != null) {
+            if (isExitCommand(command)) {
+                break;
+            }
 
             if (Objects.equals(command, "1")) {
                 var prices = choosePriceZone();
@@ -34,11 +36,9 @@ public class Main {
                     IO.println(price);
                 }
             } else {
-                if (isExitCommand(command))
-                    continue;
                 IO.println("Ange ett giltigt kommando!");
             }
-        } while (!isExitCommand(command));
+        }
     }
 
     void printCommandMenu() {
@@ -57,12 +57,15 @@ public class Main {
     TimeSlotPrice[] choosePriceZone() {
         try {
             String priceZone;
-            do {
-                IO.println("Ange ett giltigt elområde: SE1, SE2, SE3, eller SE4");
-                priceZone = IO.readln("Elområde: ");
-            } while (!isValidPriceZone(priceZone));
-            IO.println("Du har valt elområde: " + priceZone);
-            return fetchPrices(httpClient, priceZone);
+            IO.println("Ange ett elområde: SE1, SE2, SE3, eller SE4");
+            while ((priceZone = IO.readln("Elområde: ")) != null) {
+                if (!isValidPriceZone(priceZone)) {
+                    IO.println("Ogiltigt elområde, ange: SE1, SE2, SE3, eller SE4");
+                    continue;
+                }
+                IO.println("Du har valt elområde: " + priceZone);
+                return fetchPrices(httpClient, priceZone);
+            }
         } catch (HttpTimeoutException _) {
             IO.println("Servern tog för lång tid att svara, försök igen!");
         } catch (ConnectException _) {
