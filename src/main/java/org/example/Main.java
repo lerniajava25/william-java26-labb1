@@ -25,16 +25,19 @@ public class Main {
     void main() {
         printCommandMenu();
         String command;
+        var prices = new TimeSlotPrice[0];
         while ((command = IO.readln("Kommando: ")) != null) {
             if (isExitCommand(command)) {
                 break;
             }
 
             if (Objects.equals(command, "1")) {
-                var prices = choosePriceZone();
-                for (TimeSlotPrice price : prices) {
-                    IO.println(price);
+                var newPrices = choosePriceZone();
+                if (newPrices.length > 0) {
+                    prices = choosePriceZone();
                 }
+            } else if (Objects.equals(command, "2")) {
+                calculateMinMaxMean(prices);
             } else {
                 IO.println("Ange ett giltigt kommando!");
             }
@@ -46,6 +49,7 @@ public class Main {
                 Elpriser – Analysverktyg
                 ========================
                 1. Välj elområde (SE1, SE2, SE3, SE4)
+                2. Min, Max och Medelpris
                 e. Avsluta
                 """);
     }
@@ -84,6 +88,33 @@ public class Main {
                 Objects.equals(zone, "SE2") ||
                 Objects.equals(zone, "SE3") ||
                 Objects.equals(zone, "SE4");
+    }
+
+    void calculateMinMaxMean(TimeSlotPrice[] prices) {
+        if (prices.length == 0) {
+            IO.println("Välj elområde först!");
+            return;
+        }
+
+        double minPrice = prices[0].SEK_per_kWh();
+        double maxPrice = prices[0].SEK_per_kWh();
+        double meanPrice = 0;
+        for (TimeSlotPrice price : prices) {
+            if (price.SEK_per_kWh() < minPrice)
+                minPrice = price.SEK_per_kWh();
+            if (price.SEK_per_kWh() > maxPrice)
+                maxPrice = price.SEK_per_kWh();
+            meanPrice += price.SEK_per_kWh();
+        }
+        meanPrice = meanPrice / prices.length;
+
+        minPrice = Math.round(minPrice * 100);
+        maxPrice = Math.round(maxPrice * 100);
+        meanPrice = Math.round(meanPrice * 100);
+
+        IO.println(String.format("Dagens lägsta elpris: %.0f öre/kWh", minPrice));
+        IO.println(String.format("Dagens högsta elpris: %.0f öre/kWh", maxPrice));
+        IO.println(String.format("Dagens medelpris: %.0f öre/kWh", meanPrice));
     }
 
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
