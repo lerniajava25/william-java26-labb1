@@ -129,8 +129,9 @@ public class Main {
             return;
         }
 
-        Arrays.sort(prices, Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
-        for (TimeSlotPrice entry : prices) {
+        TimeSlotPrice[] sorted = prices.clone();
+        Arrays.sort(sorted, Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
+        for (TimeSlotPrice entry : sorted) {
             ZonedDateTime entryTimeStart = ZonedDateTime.parse(entry.time_start());
             ZonedDateTime entryTimeEnd = ZonedDateTime.parse(entry.time_end());
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
