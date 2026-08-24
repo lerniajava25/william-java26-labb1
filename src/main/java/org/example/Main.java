@@ -182,20 +182,13 @@ public class Main {
                 rightPointer++;
             }
         }
-        printOptimalChargingWindow(
-                leftEntry.time_start(),
-                rightEntry.time_end(),
-                lowestPriceSum / WINDOW_SIZE
-        );
-    }
 
-    void printOptimalChargingWindow(String timeStartString, String timeEndString, double averagePrice) {
-        ZonedDateTime timeStart = ZonedDateTime.parse(timeStartString);
-        ZonedDateTime timeEnd = ZonedDateTime.parse(timeEndString);
+        ZonedDateTime timeStart = ZonedDateTime.parse(leftEntry.time_start());
+        ZonedDateTime timeEnd = ZonedDateTime.parse(rightEntry.time_end());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
 
-        long averageWindowPrice = Math.round(averagePrice * 100);
+        long averageWindowPrice = Math.round((lowestPriceSum / WINDOW_SIZE) * 100);
 
         String chargingWindowString = "Bästa laddningstid idag (%s): kl %s - %s, medelpris: %d öre/kWh";
         String formattedChargingWindowString = String.format(
