@@ -23,18 +23,49 @@ public class Main {
             .build();
 
     void main() {
-        IO.println("Hello World!");
+        printCommandMenu();
+        String command;
+        while ((command = IO.readln("Kommando: ")) != null) {
+            if (isExitCommand(command)) {
+                break;
+            }
+
+            if (Objects.equals(command, "1")) {
+                var prices = choosePriceZone();
+                for (TimeSlotPrice price : prices) {
+                    IO.println(price);
+                }
+            } else {
+                IO.println("Ange ett giltigt kommando!");
+            }
+        }
+    }
+
+    void printCommandMenu() {
+        IO.print("""
+                Elpriser – Analysverktyg
+                ========================
+                1. Välj elområde (SE1, SE2, SE3, SE4)
+                e. Avsluta
+                """);
+    }
+
+    boolean isExitCommand(String command) {
+        return Objects.equals(command, "e") || Objects.equals(command, "E");
     }
 
     TimeSlotPrice[] choosePriceZone() {
         try {
             String priceZone;
-            do {
-                IO.println("Ange ett giltigt elområde: SE1, SE2, SE3, eller SE4");
-                priceZone = IO.readln("Elområde: ");
-            } while (!isValidPriceZone(priceZone));
-            IO.println("Du har valt elområde: " + priceZone);
-            return fetchPrices(httpClient, priceZone);
+            IO.println("Ange ett elområde: SE1, SE2, SE3, eller SE4");
+            while ((priceZone = IO.readln("Elområde: ")) != null) {
+                if (!isValidPriceZone(priceZone)) {
+                    IO.println("Ogiltigt elområde, ange: SE1, SE2, SE3, eller SE4");
+                    continue;
+                }
+                IO.println("Du har valt elområde: " + priceZone);
+                return fetchPrices(httpClient, priceZone);
+            }
         } catch (HttpTimeoutException _) {
             IO.println("Servern tog för lång tid att svara, försök igen!");
         } catch (ConnectException _) {
