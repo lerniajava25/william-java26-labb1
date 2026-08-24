@@ -11,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -129,8 +130,16 @@ public class Main {
         }
 
         Arrays.sort(prices, Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
-        for (TimeSlotPrice price : prices) {
-            IO.println(price);
+        for (TimeSlotPrice entry : prices) {
+            ZonedDateTime entryTimeStart = ZonedDateTime.parse(entry.time_start());
+            ZonedDateTime entryTimeEnd = ZonedDateTime.parse(entry.time_end());
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+
+            long roundedPrice = Math.round(entry.SEK_per_kWh() * 100);
+
+            String priceString = "Elpris mellan kl %s - %s: %d öre/kWh";
+            String formattedPriceString = String.format(priceString, entryTimeStart.format(dtf), entryTimeEnd.format(dtf), roundedPrice);
+            IO.println(formattedPriceString);
         }
     }
 
