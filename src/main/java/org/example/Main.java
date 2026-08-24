@@ -20,6 +20,8 @@ import java.util.Objects;
 public class Main {
     static final String BASE_API = "https://www.elprisetjustnu.se/api/v1/prices/";
 
+    static final String NO_PRICE_ZONE_MSG = "Välj elområde först!";
+
     HttpClient httpClient = HttpClient
             .newBuilder()
             .version(HttpClient.Version.HTTP_3)
@@ -43,6 +45,8 @@ public class Main {
                 calculateMinMaxMean(prices);
             } else if (Objects.equals(command, "3")) {
                 sortPriceList(prices);
+            } else if (Objects.equals(command, "4")) {
+                calculateOptimalChargingWindow(prices);
             } else {
                 IO.println("Ange ett giltigt kommando!");
             }
@@ -56,6 +60,7 @@ public class Main {
                 1. Välj elområde (SE1, SE2, SE3, SE4)
                 2. Min, Max och Medelpris
                 3. Sortera priser (lägst till högst)
+                4. Bästa laddningstid (4h sammanhängande)
                 e. Avsluta
                 """);
     }
@@ -98,7 +103,7 @@ public class Main {
 
     void calculateMinMaxMean(TimeSlotPrice[] prices) {
         if (prices.length == 0) {
-            IO.println("Välj elområde först!");
+            IO.println(NO_PRICE_ZONE_MSG);
             return;
         }
 
@@ -125,7 +130,7 @@ public class Main {
 
     void sortPriceList(TimeSlotPrice[] prices) {
         if (prices.length == 0) {
-            IO.println("Välj elområde först!");
+            IO.println(NO_PRICE_ZONE_MSG);
             return;
         }
 
@@ -141,6 +146,65 @@ public class Main {
             String formattedPriceString = String.format(priceString, entryTimeStart.format(dtf), entryTimeEnd.format(dtf), roundedPrice);
             IO.println(formattedPriceString);
         }
+    }
+
+    void calculateOptimalChargingWindow(TimeSlotPrice[] prices) {
+        if (prices.length == 0) {
+            IO.println(NO_PRICE_ZONE_MSG);
+            return;
+        }
+
+        double currentPriceSum = 0;
+        double lowestPriceSum = Double.MAX_VALUE;
+
+        final int WINDOW_SIZE = 16;
+        int leftPointer = 0;
+        int rightPointer = 0;
+
+        TimeSlotPrice leftEntry = prices[0];
+        TimeSlotPrice rightEntry = prices[15];
+
+        while (rightPointer < prices.length) {
+            if (rightPointer - leftPointer + 1 < WINDOW_SIZE) {
+                currentPriceSum += prices[rightPointer].SEK_per_kWh();
+                rightPointer++;
+            } else {
+                currentPriceSum += prices[rightPointer].SEK_per_kWh();
+                if (currentPriceSum < lowestPriceSum) {
+                    lowestPriceSum = currentPriceSum;
+                    leftEntry = prices[leftPointer];
+                    rightEntry = prices[rightPointer];
+                }
+
+                currentPriceSum -= prices[leftPointer].SEK_per_kWh();
+                leftPointer++;
+                rightPointer++;
+            }
+        }
+        printOptimalChargingWindow(
+                leftEntry.time_start(),
+                rightEntry.time_end(),
+                lowestPriceSum / WINDOW_SIZE
+        );
+    }
+
+    void printOptimalChargingWindow(String timeStartString, String timeEndString, double averagePrice) {
+        ZonedDateTime timeStart = ZonedDateTime.parse(timeStartString);
+        ZonedDateTime timeEnd = ZonedDateTime.parse(timeEndString);
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
+
+        long averageWindowPrice = Math.round(averagePrice * 100);
+
+        String chargingWindowString = "Bästa laddningstid idag (%s): kl %s - %s, medelpris: %d öre/kWh";
+        String formattedChargingWindowString = String.format(
+                chargingWindowString,
+                dateFormatter.format(timeStart),
+                timeFormatter.format(timeStart),
+                timeFormatter.format(timeEnd),
+                averageWindowPrice
+        );
+        IO.println(formattedChargingWindowString);
     }
 
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
