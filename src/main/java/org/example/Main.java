@@ -36,7 +36,7 @@ public class Main {
             if (Objects.equals(command, "1")) {
                 var newPrices = choosePriceZone();
                 if (newPrices.length > 0) {
-                    prices = choosePriceZone();
+                    prices = newPrices;
                 }
             } else if (Objects.equals(command, "2")) {
                 calculateMinMaxMean(prices);
