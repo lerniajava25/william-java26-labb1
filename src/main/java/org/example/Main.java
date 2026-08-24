@@ -12,6 +12,8 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 
 public class Main {
@@ -38,6 +40,8 @@ public class Main {
                 }
             } else if (Objects.equals(command, "2")) {
                 calculateMinMaxMean(prices);
+            } else if (Objects.equals(command, "3")) {
+                sortPriceList(prices);
             } else {
                 IO.println("Ange ett giltigt kommando!");
             }
@@ -50,6 +54,7 @@ public class Main {
                 ========================
                 1. Välj elområde (SE1, SE2, SE3, SE4)
                 2. Min, Max och Medelpris
+                3. Sortera priser (lägst till högst)
                 e. Avsluta
                 """);
     }
@@ -115,6 +120,18 @@ public class Main {
         IO.println(String.format("Dagens lägsta elpris: %.0f öre/kWh", minPrice));
         IO.println(String.format("Dagens högsta elpris: %.0f öre/kWh", maxPrice));
         IO.println(String.format("Dagens medelpris: %.0f öre/kWh", meanPrice));
+    }
+
+    void sortPriceList(TimeSlotPrice[] prices) {
+        if (prices.length == 0) {
+            IO.println("Välj elområde först!");
+            return;
+        }
+
+        Arrays.sort(prices, Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
+        for (TimeSlotPrice price : prices) {
+            IO.println(price);
+        }
     }
 
     TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
