@@ -150,10 +150,12 @@ public class Main {
     }
 
     void calculateOptimalChargingWindow(TimeSlotPrice[] prices) {
+        final int WINDOW_SIZE = 16;
+
         if (prices.length == 0) {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
-        } else if (prices.length < 16) {
+        } else if (prices.length < WINDOW_SIZE) {
             IO.println("Valt elområde saknade information för 4 timmars tid!");
             return;
         }
@@ -161,33 +163,28 @@ public class Main {
         double currentPriceSum = 0;
         double lowestPriceSum = Double.MAX_VALUE;
 
-        final int WINDOW_SIZE = 16;
         int leftPointer = 0;
         int rightPointer = 0;
 
-        TimeSlotPrice leftEntry = prices[0];
-        TimeSlotPrice rightEntry = prices[15];
+        TimeSlotPrice lowestLeftEntry = prices[0];
+        TimeSlotPrice lowestRightEntry = prices[15];
 
         while (rightPointer < prices.length) {
-            if (rightPointer - leftPointer + 1 < WINDOW_SIZE) {
-                currentPriceSum += prices[rightPointer].SEK_per_kWh();
-                rightPointer++;
-            } else {
-                currentPriceSum += prices[rightPointer].SEK_per_kWh();
+            currentPriceSum += prices[rightPointer].SEK_per_kWh();
+            if (rightPointer - leftPointer + 1 == WINDOW_SIZE) {
                 if (currentPriceSum < lowestPriceSum) {
                     lowestPriceSum = currentPriceSum;
-                    leftEntry = prices[leftPointer];
-                    rightEntry = prices[rightPointer];
+                    lowestLeftEntry = prices[leftPointer];
+                    lowestRightEntry = prices[rightPointer];
                 }
-
                 currentPriceSum -= prices[leftPointer].SEK_per_kWh();
                 leftPointer++;
-                rightPointer++;
             }
+            rightPointer++;
         }
 
-        ZonedDateTime timeStart = ZonedDateTime.parse(leftEntry.time_start());
-        ZonedDateTime timeEnd = ZonedDateTime.parse(rightEntry.time_end());
+        ZonedDateTime timeStart = ZonedDateTime.parse(lowestLeftEntry.time_start());
+        ZonedDateTime timeEnd = ZonedDateTime.parse(lowestRightEntry.time_end());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
 
