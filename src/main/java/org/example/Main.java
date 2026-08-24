@@ -32,7 +32,10 @@ public class Main {
             }
 
             if (Objects.equals(command, "1")) {
-                prices = choosePriceZone();
+                var newPrices = choosePriceZone();
+                if (newPrices.length > 0) {
+                    prices = choosePriceZone();
+                }
             } else if (Objects.equals(command, "2")) {
                 calculateMinMaxMean(prices);
             } else {
