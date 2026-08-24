@@ -153,6 +153,9 @@ public class Main {
         if (prices.length == 0) {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
+        } else if (prices.length < 16) {
+            IO.println("Valt elområde saknade information för 4 timmars tid!");
+            return;
         }
 
         double currentPriceSum = 0;
@@ -186,7 +189,7 @@ public class Main {
         ZonedDateTime timeStart = ZonedDateTime.parse(leftEntry.time_start());
         ZonedDateTime timeEnd = ZonedDateTime.parse(rightEntry.time_end());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
 
         long averageWindowPrice = Math.round((lowestPriceSum / WINDOW_SIZE) * 100);
 
