@@ -13,9 +13,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
+import java.util.*;
 
 public class Main {
     static final String BASE_API = "https://www.elprisetjustnu.se/api/v1/prices/";
@@ -30,7 +28,7 @@ public class Main {
     void main() {
         printCommandMenu();
         String command;
-        var prices = new TimeSlotPrice[0];
+        List<TimeSlotPrice> prices = new ArrayList<>();
         while ((command = IO.readln("Kommando: ")) != null) {
             if (isExitCommand(command)) {
                 break;
@@ -38,7 +36,7 @@ public class Main {
 
             if (Objects.equals(command, "1")) {
                 var newPrices = choosePriceZone();
-                if (newPrices.length > 0) {
+                if (!newPrices.isEmpty()) {
                     prices = newPrices;
                 }
             } else if (Objects.equals(command, "2")) {
@@ -69,7 +67,7 @@ public class Main {
         return Objects.equals(command, "e") || Objects.equals(command, "E");
     }
 
-    TimeSlotPrice[] choosePriceZone() {
+    List<TimeSlotPrice> choosePriceZone() {
         try {
             String priceZone;
             IO.println("Ange ett elområde: SE1, SE2, SE3, eller SE4");
@@ -91,7 +89,7 @@ public class Main {
             Thread.currentThread().interrupt();
             IO.println("Din förfrågan till servern avbröts, försök igen: " + e.getMessage());
         }
-        return new TimeSlotPrice[0];
+        return Collections.emptyList();
     }
 
     boolean isValidPriceZone(String zone) {
@@ -101,14 +99,14 @@ public class Main {
                 Objects.equals(zone, "SE4");
     }
 
-    void calculateMinMaxMean(TimeSlotPrice[] prices) {
-        if (prices.length == 0) {
+    void calculateMinMaxMean(List<TimeSlotPrice> prices) {
+        if (prices.isEmpty()) {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
         }
 
-        double minPrice = prices[0].SEK_per_kWh();
-        double maxPrice = prices[0].SEK_per_kWh();
+        double minPrice = prices.getFirst().SEK_per_kWh();
+        double maxPrice = prices.getFirst().SEK_per_kWh();
         double meanPrice = 0;
         for (TimeSlotPrice price : prices) {
             if (price.SEK_per_kWh() < minPrice)
@@ -117,7 +115,7 @@ public class Main {
                 maxPrice = price.SEK_per_kWh();
             meanPrice += price.SEK_per_kWh();
         }
-        meanPrice = meanPrice / prices.length;
+        meanPrice = meanPrice / prices.size();
 
         minPrice = Math.round(minPrice * 100);
         maxPrice = Math.round(maxPrice * 100);
@@ -128,14 +126,14 @@ public class Main {
         IO.println(String.format("Dagens medelpris: %.0f öre/kWh", meanPrice));
     }
 
-    void sortPriceList(TimeSlotPrice[] prices) {
-        if (prices.length == 0) {
+    void sortPriceList(List<TimeSlotPrice> prices) {
+        if (prices.isEmpty()) {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
         }
 
-        TimeSlotPrice[] sorted = prices.clone();
-        Arrays.sort(sorted, Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
+        List<TimeSlotPrice> sorted = new ArrayList<>(prices);
+        sorted.sort(Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
         for (TimeSlotPrice entry : sorted) {
             ZonedDateTime entryTimeStart = ZonedDateTime.parse(entry.time_start());
             ZonedDateTime entryTimeEnd = ZonedDateTime.parse(entry.time_end());
@@ -149,13 +147,13 @@ public class Main {
         }
     }
 
-    void calculateOptimalChargingWindow(TimeSlotPrice[] prices) {
+    void calculateOptimalChargingWindow(List<TimeSlotPrice> prices) {
         final int WINDOW_SIZE = 16;
 
-        if (prices.length == 0) {
+        if (prices.isEmpty()) {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
-        } else if (prices.length < WINDOW_SIZE) {
+        } else if (prices.size() < WINDOW_SIZE) {
             IO.println("Valt elområde saknade information för 4 timmars tid!");
             return;
         }
@@ -166,18 +164,18 @@ public class Main {
         int leftPointer = 0;
         int rightPointer = 0;
 
-        TimeSlotPrice lowestLeftEntry = prices[0];
-        TimeSlotPrice lowestRightEntry = prices[15];
+        TimeSlotPrice lowestLeftEntry = prices.getFirst();
+        TimeSlotPrice lowestRightEntry = prices.get(15);
 
-        while (rightPointer < prices.length) {
-            currentPriceSum += prices[rightPointer].SEK_per_kWh();
+        while (rightPointer < prices.size()) {
+            currentPriceSum += prices.get(rightPointer).SEK_per_kWh();
             if (rightPointer - leftPointer + 1 == WINDOW_SIZE) {
                 if (currentPriceSum < lowestPriceSum) {
                     lowestPriceSum = currentPriceSum;
-                    lowestLeftEntry = prices[leftPointer];
-                    lowestRightEntry = prices[rightPointer];
+                    lowestLeftEntry = prices.get(leftPointer);
+                    lowestRightEntry = prices.get(rightPointer);
                 }
-                currentPriceSum -= prices[leftPointer].SEK_per_kWh();
+                currentPriceSum -= prices.get(leftPointer).SEK_per_kWh();
                 leftPointer++;
             }
             rightPointer++;
@@ -201,7 +199,7 @@ public class Main {
         IO.println(formattedChargingWindowString);
     }
 
-    TimeSlotPrice[] fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
+    List<TimeSlotPrice> fetchPrices(HttpClient client, String priceZone) throws IOException, InterruptedException {
         LocalDateTime date = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM-dd");
         String formattedDate = date.format(formatter);
@@ -215,11 +213,12 @@ public class Main {
 
         if (response.statusCode() != 200) {
             IO.println("Problem med förfrågan till servern! (status " + response.statusCode() + ")");
-            return new TimeSlotPrice[0];
+            return Collections.emptyList();
         }
 
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(response.body(), TimeSlotPrice[].class);
+        var priceArray = mapper.readValue(response.body(), TimeSlotPrice[].class);
+        return Collections.unmodifiableList(Arrays.asList(priceArray));
     }
 }
 
