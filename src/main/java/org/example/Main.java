@@ -18,7 +18,14 @@ import java.util.*;
 public class Main {
     static final String BASE_API = "https://www.elprisetjustnu.se/api/v1/prices/";
 
+    static final String REQUEST_COMMAND_PREFIX = "Kommando: ";
+    static final String REQUEST_PRICE_ZONE_PREFIX = "Elområde: ";
+
+    static final String INVALID_COMMAND_MSG = "Ange ett giltigt kommando!";
     static final String NO_PRICE_ZONE_MSG = "Välj elområde först!";
+    static final String REQUEST_PRICE_ZONE_MSG = "Ange ett elområde: SE1, SE2, SE3, eller SE4";
+    static final String INVALID_PRICE_ZONE_MSG = "Ogiltigt elområde, ange: SE1, SE2, SE3, eller SE4";
+    static final String INCORRECT_PRICE_ZONE_DATASET_SIZE_MSG = "Valt elområde saknade information för 4 timmars tid!";
 
     HttpClient httpClient = HttpClient
             .newBuilder()
@@ -29,24 +36,19 @@ public class Main {
         printCommandMenu();
         String command;
         List<TimeSlotPrice> prices = new ArrayList<>();
-        while ((command = IO.readln("Kommando: ")) != null) {
-            if (isExitCommand(command)) {
-                break;
-            }
-
-            if (Objects.equals(command, "1")) {
-                var newPrices = choosePriceZone();
-                if (!newPrices.isEmpty()) {
-                    prices = newPrices;
+        while ((command = IO.readln(REQUEST_COMMAND_PREFIX)) != null) {
+            switch (command) {
+                case "1" -> {
+                    var newPrices = choosePriceZone();
+                    if (!newPrices.isEmpty()) {
+                        prices = newPrices;
+                    }
                 }
-            } else if (Objects.equals(command, "2")) {
-                calculateMinMaxMean(prices);
-            } else if (Objects.equals(command, "3")) {
-                sortPriceList(prices);
-            } else if (Objects.equals(command, "4")) {
-                calculateOptimalChargingWindow(prices);
-            } else {
-                IO.println("Ange ett giltigt kommando!");
+                case "2" -> calculateMinMaxMean(prices);
+                case "3" -> sortPriceList(prices);
+                case "4" -> calculateOptimalChargingWindow(prices);
+                case "e", "E" -> System.exit(0);
+                default -> IO.println(INVALID_COMMAND_MSG);
             }
         }
     }
@@ -63,21 +65,19 @@ public class Main {
                 """);
     }
 
-    boolean isExitCommand(String command) {
-        return Objects.equals(command, "e") || Objects.equals(command, "E");
-    }
-
     List<TimeSlotPrice> choosePriceZone() {
         try {
             String priceZone;
-            IO.println("Ange ett elområde: SE1, SE2, SE3, eller SE4");
-            while ((priceZone = IO.readln("Elområde: ")) != null) {
-                if (!isValidPriceZone(priceZone)) {
-                    IO.println("Ogiltigt elområde, ange: SE1, SE2, SE3, eller SE4");
-                    continue;
+            IO.println(REQUEST_PRICE_ZONE_MSG);
+            while ((priceZone = IO.readln(REQUEST_PRICE_ZONE_PREFIX)) != null) {
+                priceZone = priceZone.toUpperCase();
+                switch (priceZone) {
+                    case "SE1", "SE2", "SE3", "SE4" -> {
+                        IO.println("Du har valt elområde: " + priceZone);
+                        return fetchPrices(httpClient, priceZone);
+                    }
+                    default -> IO.println(INVALID_PRICE_ZONE_MSG);
                 }
-                IO.println("Du har valt elområde: " + priceZone);
-                return fetchPrices(httpClient, priceZone);
             }
         } catch (HttpTimeoutException _) {
             IO.println("Servern tog för lång tid att svara, försök igen!");
@@ -90,13 +90,6 @@ public class Main {
             IO.println("Din förfrågan till servern avbröts, försök igen: " + e.getMessage());
         }
         return Collections.emptyList();
-    }
-
-    boolean isValidPriceZone(String zone) {
-        return Objects.equals(zone, "SE1") ||
-                Objects.equals(zone, "SE2") ||
-                Objects.equals(zone, "SE3") ||
-                Objects.equals(zone, "SE4");
     }
 
     void calculateMinMaxMean(List<TimeSlotPrice> prices) {
@@ -154,7 +147,7 @@ public class Main {
             IO.println(NO_PRICE_ZONE_MSG);
             return;
         } else if (prices.size() < WINDOW_SIZE) {
-            IO.println("Valt elområde saknade information för 4 timmars tid!");
+            IO.println(INCORRECT_PRICE_ZONE_DATASET_SIZE_MSG);
             return;
         }
 
