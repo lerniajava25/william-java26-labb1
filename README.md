@@ -1,6 +1,8 @@
 # Elpris-analysator (CLI & Externt REST API)
 
-**Repo för labb 1 i kursen Java 2026. Samtliga deluppgifter för godkänd nivå är implementerade:**
+**Repo för labb 1 i kursen Java 2026. Samtliga deluppgifter för godkänd nivå är implementerade**
+
+- Utvecklat i JDK 26 med Maven.
 
 ## Funktioner
 
