@@ -1,4 +1,4 @@
-# Elpris-analysator (CLI & REST API)
+# Elpris-analysator (CLI & Externt REST API)
 
 **Repo för labb 1 i kursen Java 2026. Samtliga deluppgifter för godkänd nivå är implementerade:**
 
@@ -19,6 +19,7 @@
     - Använder algoritmen sliding window för beräkningen.
     - Då vi alltid analyserar för 4 sammanhängande timmar är fönsterstorleken statisk. Därför använder jag metoden med 2
       pekare som alltid pekar på indexet längst till vänster respektive höger i fönstret.
+   - Metoden är byggd för prislistor uppdelade per 15 minuter. Därför är fönsterstorleken konstant 16.
     - Förutom att visa klockslagen för de 4 timmarna visar även utskriften vad medelpriset i ören/kWh kommer att vara
       mellan klockslagen.
 
