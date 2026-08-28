@@ -39,7 +39,8 @@ public class Main {
         while ((command = IO.readln(REQUEST_COMMAND_PREFIX)) != null) {
             switch (command) {
                 case "1" -> {
-                    var newPrices = choosePriceZone();
+                    String priceZone = choosePriceZone();
+                    var newPrices = loadPrices(priceZone);
                     if (!newPrices.isEmpty()) {
                         prices = newPrices;
                     }
@@ -65,20 +66,29 @@ public class Main {
                 """);
     }
 
-    List<TimeSlotPrice> choosePriceZone() {
-        try {
-            String priceZone;
-            IO.println(REQUEST_PRICE_ZONE_MSG);
-            while ((priceZone = IO.readln(REQUEST_PRICE_ZONE_PREFIX)) != null) {
-                priceZone = priceZone.toUpperCase();
-                switch (priceZone) {
-                    case "SE1", "SE2", "SE3", "SE4" -> {
-                        IO.println("Du har valt elområde: " + priceZone);
-                        return fetchPrices(httpClient, priceZone);
-                    }
-                    default -> IO.println(INVALID_PRICE_ZONE_MSG);
+    String choosePriceZone() {
+        String priceZone;
+        IO.println(REQUEST_PRICE_ZONE_MSG);
+        while ((priceZone = IO.readln(REQUEST_PRICE_ZONE_PREFIX)) != null) {
+            priceZone = priceZone.toUpperCase();
+            switch (priceZone) {
+                case "SE1", "SE2", "SE3", "SE4" -> {
+                    IO.println("Du har valt elområde: " + priceZone);
+                    return priceZone;
                 }
+                default -> IO.println(INVALID_PRICE_ZONE_MSG);
             }
+        }
+        return null;
+    }
+
+    List<TimeSlotPrice> loadPrices(String priceZone) {
+        if (priceZone == null) {
+            return Collections.emptyList();
+        }
+
+        try {
+            return fetchPrices(httpClient, priceZone);
         } catch (HttpTimeoutException _) {
             IO.println("Servern tog för lång tid att svara, försök igen!");
         } catch (ConnectException _) {
