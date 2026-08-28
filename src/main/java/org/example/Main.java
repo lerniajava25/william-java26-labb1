@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.model.TimeSlotPrice;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -110,15 +111,15 @@ public class Main {
             return;
         }
 
-        double minPrice = prices.getFirst().SEK_per_kWh();
-        double maxPrice = prices.getFirst().SEK_per_kWh();
+        double minPrice = prices.getFirst().sekPerKwh();
+        double maxPrice = prices.getFirst().sekPerKwh();
         double meanPrice = 0;
         for (TimeSlotPrice price : prices) {
-            if (price.SEK_per_kWh() < minPrice)
-                minPrice = price.SEK_per_kWh();
-            if (price.SEK_per_kWh() > maxPrice)
-                maxPrice = price.SEK_per_kWh();
-            meanPrice += price.SEK_per_kWh();
+            if (price.sekPerKwh() < minPrice)
+                minPrice = price.sekPerKwh();
+            if (price.sekPerKwh() > maxPrice)
+                maxPrice = price.sekPerKwh();
+            meanPrice += price.sekPerKwh();
         }
         meanPrice = meanPrice / prices.size();
 
@@ -138,13 +139,13 @@ public class Main {
         }
 
         List<TimeSlotPrice> sorted = new ArrayList<>(prices);
-        sorted.sort(Comparator.comparing(TimeSlotPrice::SEK_per_kWh));
+        sorted.sort(Comparator.comparing(TimeSlotPrice::sekPerKwh));
         for (TimeSlotPrice entry : sorted) {
-            ZonedDateTime entryTimeStart = ZonedDateTime.parse(entry.time_start());
-            ZonedDateTime entryTimeEnd = ZonedDateTime.parse(entry.time_end());
+            ZonedDateTime entryTimeStart = ZonedDateTime.parse(entry.timeStart());
+            ZonedDateTime entryTimeEnd = ZonedDateTime.parse(entry.timeEnd());
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
 
-            long roundedPrice = Math.round(entry.SEK_per_kWh() * 100);
+            long roundedPrice = Math.round(entry.sekPerKwh() * 100);
 
             String priceString = "Elpris mellan kl %s - %s: %d öre/kWh";
             String formattedPriceString = String.format(priceString, entryTimeStart.format(dtf), entryTimeEnd.format(dtf), roundedPrice);
@@ -173,21 +174,21 @@ public class Main {
         TimeSlotPrice lowestRightEntry = prices.get(15);
 
         while (rightPointer < prices.size()) {
-            currentPriceSum += prices.get(rightPointer).SEK_per_kWh();
+            currentPriceSum += prices.get(rightPointer).sekPerKwh();
             if (rightPointer - leftPointer + 1 == WINDOW_SIZE) {
                 if (currentPriceSum < lowestPriceSum) {
                     lowestPriceSum = currentPriceSum;
                     lowestLeftEntry = prices.get(leftPointer);
                     lowestRightEntry = prices.get(rightPointer);
                 }
-                currentPriceSum -= prices.get(leftPointer).SEK_per_kWh();
+                currentPriceSum -= prices.get(leftPointer).sekPerKwh();
                 leftPointer++;
             }
             rightPointer++;
         }
 
-        ZonedDateTime timeStart = ZonedDateTime.parse(lowestLeftEntry.time_start());
-        ZonedDateTime timeEnd = ZonedDateTime.parse(lowestRightEntry.time_end());
+        ZonedDateTime timeStart = ZonedDateTime.parse(lowestLeftEntry.timeStart());
+        ZonedDateTime timeEnd = ZonedDateTime.parse(lowestRightEntry.timeEnd());
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
 
@@ -225,7 +226,4 @@ public class Main {
         var priceArray = mapper.readValue(response.body(), TimeSlotPrice[].class);
         return Collections.unmodifiableList(Arrays.asList(priceArray));
     }
-}
-
-record TimeSlotPrice(double SEK_per_kWh, double EUR_per_kWh, double EXR, String time_start, String time_end) {
 }
