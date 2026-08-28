@@ -1,6 +1,7 @@
 package org.example.client;
 
 import org.example.model.TimeSlotPrice;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -40,8 +41,13 @@ public class ElectricityPriceClient {
             return Collections.emptyList();
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        var priceArray = mapper.readValue(response.body(), TimeSlotPrice[].class);
-        return Collections.unmodifiableList(Arrays.asList(priceArray));
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            var priceArray = mapper.readValue(response.body(), TimeSlotPrice[].class);
+            return Collections.unmodifiableList(Arrays.asList(priceArray));
+        } catch (JacksonException e) {
+            IO.println("Kunde inte konvertera data till JSON: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 }
