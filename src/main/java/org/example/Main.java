@@ -40,9 +40,11 @@ public class Main {
             switch (command) {
                 case "1" -> {
                     String priceZone = choosePriceZone();
-                    var newPrices = loadPrices(priceZone);
-                    if (!newPrices.isEmpty()) {
-                        prices = newPrices;
+                    if (priceZone != null) {
+                        var newPrices = loadPrices(priceZone);
+                        if (!newPrices.isEmpty()) {
+                            prices = newPrices;
+                        }
                     }
                 }
                 case "2" -> calculateMinMaxMean(prices);
