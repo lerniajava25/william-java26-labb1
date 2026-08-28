@@ -17,7 +17,15 @@ public class PriceAnalyzer {
     private static final String NO_PRICE_ZONE_MSG = "Välj elområde först!";
     private static final String INCORRECT_PRICE_ZONE_DATASET_SIZE_MSG = "Valt elområde saknade information för 4 timmars tid!";
 
-    private static final ElectricityPriceClient priceClient = new ElectricityPriceClient();
+    private final ElectricityPriceClient priceClient;
+
+    public PriceAnalyzer() {
+        this(new ElectricityPriceClient());
+    }
+
+    public PriceAnalyzer(ElectricityPriceClient priceClient) {
+        this.priceClient = priceClient;
+    }
 
     public List<TimeSlotPrice> loadPrices(String priceZone) {
         if (priceZone == null) {
@@ -105,7 +113,7 @@ public class PriceAnalyzer {
         int rightPointer = 0;
 
         TimeSlotPrice lowestLeftEntry = prices.getFirst();
-        TimeSlotPrice lowestRightEntry = prices.get(15);
+        TimeSlotPrice lowestRightEntry = prices.get(WINDOW_SIZE - 1);
 
         while (rightPointer < prices.size()) {
             currentPriceSum += prices.get(rightPointer).sekPerKwh();
